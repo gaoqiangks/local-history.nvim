@@ -52,7 +52,17 @@ function M.from_vscode_like(opts)
       out.save_on = { "BufWritePost" }
     elseif trigger == "onChange" then
       out.save_on = { "TextChanged", "TextChangedI" }
+    elseif trigger == "onFocusLost" then
+      out.save_on = { "FocusLost" }
     end
+  end
+
+  if out.on_change_debounce_ms == nil then
+    out.on_change_debounce_ms = opts["local-history.debounceMs"] or opts.localHistoryDebounceMs
+  end
+
+  if out.min_snapshot_interval_ms == nil then
+    out.min_snapshot_interval_ms = opts["local-history.minIntervalMs"] or opts.localHistoryMinIntervalMs
   end
 
   if out.notify == nil then

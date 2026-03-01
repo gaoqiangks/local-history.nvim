@@ -2,15 +2,24 @@ local M = {}
 
 M.defaults = {
   enabled = true,
-  save_on = { "BufWritePost" },
+  save_on = { "BufWritePost" }, -- BufWritePost | TextChanged | TextChangedI | FocusLost
+  on_change_debounce_ms = 800,
+  min_snapshot_interval_ms = 500,
+
   root_dir = vim.fn.stdpath("state") .. "/local-history",
   max_entries_per_file = 200,
+  retention_days = 30,
+
   exclude_patterns = {
     "%.git/",
     "node_modules/",
     "%.cache/",
+    "%.swp$",
+    "~$",
   },
+
   max_file_size_kb = 1024,
+  skip_binary = true,
   notify = true,
 }
 

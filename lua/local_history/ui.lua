@@ -1,10 +1,7 @@
 local Store = require("local_history.store")
+local Util = require("local_history.util")
 
 local M = {}
-
-local function basename(path)
-  return vim.fn.fnamemodify(path, ":t")
-end
 
 function M.select_snapshot(file_abs, cfg, cb)
   local snaps = Store.list_for_file(file_abs, cfg)
@@ -16,7 +13,7 @@ function M.select_snapshot(file_abs, cfg, cb)
   local items, map = {}, {}
   for i = #snaps, 1, -1 do
     local p = snaps[i]
-    local label = basename(p)
+    local label = Util.basename(p)
     table.insert(items, label)
     map[label] = p
   end
@@ -36,7 +33,7 @@ function M.list(file_abs, cfg)
   end
   local lines = { "Local History:" }
   for i = #snaps, 1, -1 do
-    table.insert(lines, "  " .. basename(snaps[i]))
+    table.insert(lines, "  " .. Util.basename(snaps[i]))
   end
   Store.notify(table.concat(lines, "\n"), vim.log.levels.INFO, cfg)
 end
@@ -48,22 +45,20 @@ function M.diff_with_current(file_abs, cfg)
       Store.notify("Failed to read snapshot", vim.log.levels.ERROR, cfg)
       return
     end
-
     local cur = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
     local diff = vim.diff(old, cur, { result_type = "unified" })
     if diff == "" then
       Store.notify("No difference", vim.log.levels.INFO, cfg)
       return
     end
-
     vim.cmd("new")
-    local buf = vim.api.nvim_get_current_buf()
-    vim.bo[buf].buftype = "nofile"
-    vim.bo[buf].bufhidden = "wipe"
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].filetype = "diff"
-    vim.api.nvim_buf_set_name(buf, "LocalHistoryDiff")
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(diff, "\n", { plain = true }))
+    local b = vim.api.nvim_get_current_buf()
+    vim.bo[b].buftype = "nofile"
+    vim.bo[b].bufhidden = "wipe"
+    vim.bo[b].swapfile = false
+    vim.bo[b].filetype = "diff"
+    vim.api.nvim_buf_set_name(b, "LocalHistoryDiff")
+    vim.api.nvim_buf_set_lines(b, 0, -1, false, vim.split(diff, "\n", { plain = true }))
   end)
 end
 
@@ -74,7 +69,7 @@ function M.restore(file_abs, cfg)
       Store.notify("Restore failed: " .. (err or ""), vim.log.levels.ERROR, cfg)
       return
     end
-    Store.notify("Restored from " .. vim.fn.fnamemodify(snapshot_path, ":t"), vim.log.levels.INFO, cfg)
+    Store.notify("Restored from " .. Util.basename(snapshot_path), vim.log.levels.INFO, cfg)
   end)
 end
 

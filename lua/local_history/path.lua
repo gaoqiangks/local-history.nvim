@@ -11,7 +11,7 @@ end
 function M.workspace_root(file_abs)
   local cwd = vim.loop.cwd() or vim.fn.getcwd()
   cwd = M.normalize(cwd)
-  if file_abs and vim.startswith(file_abs, cwd) then
+  if file_abs and vim.startswith(M.normalize(file_abs), cwd) then
     return cwd
   end
   return cwd
@@ -39,6 +39,10 @@ end
 
 function M.timestamp_name()
   return os.date("%Y%m%d-%H%M%S") .. ".snap"
+end
+
+function M.meta_file(dir)
+  return dir .. "/index.json"
 end
 
 return M
