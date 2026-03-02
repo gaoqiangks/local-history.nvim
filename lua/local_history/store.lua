@@ -149,6 +149,12 @@ function M.snapshot_current_file(file_abs, cfg, source)
     source = source or "manual",
   })
 
+  notify(
+    string.format("Snapshot saved: %s (%s)", fname, Util.basename(file_abs)),
+    vim.log.levels.INFO,
+    cfg
+  )
+
   cleanup_by_retention_days(dir, cfg.retention_days)
   cleanup_by_count(dir, cfg.max_entries_per_file)
 end
