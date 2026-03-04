@@ -1,7 +1,9 @@
 # local-history.nvim
 
+这个项目是AI生成的,  vscode的插件local-history的的neovim版本.  基本功能都可用.
+
 一个为 Neovim 提供“本地历史快照（Local History）”能力的插件，目标是尽量对齐 VSCode Local History 的工作流：  
-在你编辑文件时自动保存历史版本，支持查看、对比、恢复、清理。
+在你编辑文件时自动保存历史版本，支持查看、对比、恢复、清理。 
 
 ---
 
