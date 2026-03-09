@@ -99,7 +99,7 @@ end
 
 local function cleanup_by_count(dir, max_entries)
     if max_entries == nil or max_entries < 0 then
-        return -- -1 => unlimited
+        return
     end
     if max_entries == 0 then
         return
@@ -118,7 +118,7 @@ end
 
 local function cleanup_by_retention_days(dir, retention_days)
     if retention_days == nil or retention_days < 0 then
-        return -- -1 => unlimited
+        return
     end
     if retention_days == 0 then
         return
@@ -164,6 +164,10 @@ local function should_run_cleanup(dir, cfg)
     return true
 end
 
+local function dedupe_enabled(cfg)
+    return cfg.dedupe_enabled ~= false
+end
+
 local function snapshot_impl(file_abs, cfg, source)
     local t_all = now_ms()
 
@@ -193,19 +197,23 @@ local function snapshot_impl(file_abs, cfg, source)
         return
     end
 
-    local t_last = now_ms()
-    local snaps = list_snapshots(dir)
-    local last = snaps[#snaps]
-    profile_log(cfg, "list_snapshots", t_last, "count=" .. #snaps)
+    if dedupe_enabled(cfg) then
+        local t_last = now_ms()
+        local snaps = list_snapshots(dir)
+        local last = snaps[#snaps]
+        profile_log(cfg, "list_snapshots", t_last, "count=" .. #snaps)
 
-    if last then
-        local t_prev = now_ms()
-        local prev = read_file(last)
-        profile_log(cfg, "read_last_snapshot", t_prev, Util.basename(last))
-        if prev == content then
-            profile_log(cfg, "skip_duplicate", t_all)
-            return
+        if last then
+            local t_prev = now_ms()
+            local prev = read_file(last)
+            profile_log(cfg, "read_last_snapshot", t_prev, Util.basename(last))
+            if prev == content then
+                profile_log(cfg, "skip_duplicate", t_all)
+                return
+            end
         end
+    else
+        profile_log(cfg, "dedupe_skipped", now_ms())
     end
 
     local fname = Path.timestamp_name()
@@ -247,7 +255,6 @@ local function snapshot_impl(file_abs, cfg, source)
     profile_log(cfg, "snapshot_total", t_all, Util.basename(file_abs))
 end
 
--- 对外：异步入口（下一帧执行，避免阻塞当前保存回调）
 function M.snapshot_current_file(file_abs, cfg, source)
     vim.schedule(function()
         local ok, err = pcall(snapshot_impl, file_abs, cfg, source)
