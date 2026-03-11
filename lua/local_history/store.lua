@@ -44,9 +44,17 @@ local function write_file(path, content)
 end
 
 local function list_snapshots(dir)
-    local files = vim.fn.globpath(dir, "*.snap", false, true) or {}
-    table.sort(files)
-    return files
+    local files = vim.fn.globpath(dir, "*", false, true) or {}
+    -- Filter to only include files that match the timestamp pattern (YYYYMMDD-HHMMSS)
+    local filtered = {}
+    for _, f in ipairs(files) do
+        local name = vim.fn.fnamemodify(f, ":t")
+        if name:match("^%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d$") then
+            table.insert(filtered, f)
+        end
+    end
+    table.sort(filtered)
+    return filtered
 end
 
 local function should_exclude(file_abs, cfg)
