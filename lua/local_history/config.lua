@@ -6,7 +6,7 @@ M.defaults = {
   on_change_debounce_ms = 800,
   min_snapshot_interval_ms = 500,
 
-  root_dir = ".history", -- This is relative to each file's directory
+  root_dir = ".history", -- This can be an absolute path or relative to each file's directory
   max_entries_per_file = 200,
   retention_days = 30,
 

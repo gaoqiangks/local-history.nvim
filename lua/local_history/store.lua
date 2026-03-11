@@ -45,14 +45,20 @@ end
 
 local function list_snapshots(dir)
     local files = vim.fn.globpath(dir, "*", false, true) or {}
-    -- Filter to only include files that match the timestamp pattern (YYYYMMDD-HHMMSS)
+    -- Filter to only include files that match the new pattern: *_YYYYMMDD-HHMMSS.*
     -- and exclude the index.json file
     local filtered = {}
     for _, f in ipairs(files) do
         local name = vim.fn.fnamemodify(f, ":t")
         -- Exclude index.json
-        if name ~= "index.json" and name:match("^%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d$") then
-            table.insert(filtered, f)
+        if name ~= "index.json" then
+            -- Check if the filename ends with _YYYYMMDD-HHMMSS.extension
+            -- Extract the timestamp part
+            local pattern = "_(%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d)"
+            local pos = name:find(pattern)
+            if pos then
+                table.insert(filtered, f)
+            end
         end
     end
     table.sort(filtered)
@@ -194,9 +200,17 @@ local function snapshot_impl(file_abs, cfg, source)
     profile_log(cfg, "check_exclude", t_ex)
 
     local t_path = now_ms()
-    local root = Path.workspace_root(file_abs)
-    local rel = Path.relpath(file_abs, root)
-    local dir = Path.file_dir(cfg.root_dir, root, rel)
+    -- Use the configured root_dir directly as the storage root
+    -- Ensure it's an absolute path
+    local storage_root = cfg.root_dir
+    if not vim.startswith(storage_root, "/") then
+        -- If it's relative, make it absolute relative to cwd
+        storage_root = vim.fn.getcwd() .. "/" .. storage_root
+    end
+    storage_root = Path.normalize(storage_root)
+    
+    -- Get the storage directory based on the full file path
+    local dir = Path.storage_dir(storage_root, file_abs)
     Path.ensure_dir(dir)
     profile_log(cfg, "prepare_path", t_path, dir)
 
@@ -226,7 +240,8 @@ local function snapshot_impl(file_abs, cfg, source)
         profile_log(cfg, "dedupe_skipped", now_ms())
     end
 
-    local fname = Path.timestamp_name()
+    local timestamp = Path.timestamp_name()
+    local fname = Path.snapshot_filename(file_abs, timestamp)
     local full = dir .. "/" .. fname
 
     local t_write = now_ms()
@@ -276,9 +291,13 @@ end
 
 function M.list_for_file(file_abs, cfg)
     file_abs = Path.normalize(file_abs)
-    local root = Path.workspace_root(file_abs)
-    local rel = Path.relpath(file_abs, root)
-    local dir = Path.file_dir(cfg.root_dir, root, rel)
+    -- Use the same logic as in snapshot_impl to get the storage directory
+    local storage_root = cfg.root_dir
+    if not vim.startswith(storage_root, "/") then
+        storage_root = vim.fn.getcwd() .. "/" .. storage_root
+    end
+    storage_root = Path.normalize(storage_root)
+    local dir = Path.storage_dir(storage_root, file_abs)
     return list_snapshots(dir), dir
 end
 

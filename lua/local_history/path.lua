@@ -32,6 +32,7 @@ function M.workspace_hash(root)
 end
 
 function M.file_dir(root_dir, workspace_root, relpath)
+  -- For backward compatibility, we'll keep this function but it's not used in the new approach
   -- Build the absolute path to the file's directory
   local file_abs = workspace_root .. "/" .. relpath
   file_abs = M.normalize(file_abs)
@@ -41,6 +42,32 @@ function M.file_dir(root_dir, workspace_root, relpath)
   -- root_dir is relative to the file's directory (usually ".history")
   local history_dir = file_dir_path .. "/" .. root_dir .. "/" .. file_name
   return history_dir
+end
+
+function M.storage_dir(root_dir, file_abs)
+  -- root_dir is the absolute path where all snapshots should be stored
+  -- file_abs is the absolute path of the original file
+  file_abs = M.normalize(file_abs)
+  -- Remove leading slash to avoid absolute path issues
+  local clean_path = file_abs:gsub("^/", "")
+  -- Replace other slashes with something else? No, we want to preserve directory structure
+  -- The storage directory is root_dir + / + clean_path (without the filename)
+  local dir = vim.fn.fnamemodify(file_abs, ":p:h")
+  local dir_clean = dir:gsub("^/", "")
+  local storage_dir = root_dir .. "/" .. dir_clean
+  return M.normalize(storage_dir)
+end
+
+function M.snapshot_filename(file_abs, timestamp)
+  -- Generate filename: <basename_without_extension>_<timestamp>.<extension>
+  local basename = vim.fn.fnamemodify(file_abs, ":t")
+  local name = vim.fn.fnamemodify(basename, ":r")
+  local ext = vim.fn.fnamemodify(basename, ":e")
+  if ext and ext ~= "" then
+    return string.format("%s_%s.%s", name, timestamp, ext)
+  else
+    return string.format("%s_%s", name, timestamp)
+  end
 end
 
 function M.timestamp_name()
