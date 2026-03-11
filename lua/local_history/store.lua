@@ -46,10 +46,12 @@ end
 local function list_snapshots(dir)
     local files = vim.fn.globpath(dir, "*", false, true) or {}
     -- Filter to only include files that match the timestamp pattern (YYYYMMDD-HHMMSS)
+    -- and exclude the index.json file
     local filtered = {}
     for _, f in ipairs(files) do
         local name = vim.fn.fnamemodify(f, ":t")
-        if name:match("^%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d$") then
+        -- Exclude index.json
+        if name ~= "index.json" and name:match("^%d%d%d%d%d%d%d%d%-%d%d%d%d%d%d$") then
             table.insert(filtered, f)
         end
     end

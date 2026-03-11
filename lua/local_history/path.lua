@@ -32,15 +32,14 @@ function M.workspace_hash(root)
 end
 
 function M.file_dir(root_dir, workspace_root, relpath)
-  -- VS Code local-history style: .history/<filename>/ in the same directory as the file
-  -- root_dir is ignored, we always use .history
   -- Build the absolute path to the file's directory
   local file_abs = workspace_root .. "/" .. relpath
   file_abs = M.normalize(file_abs)
   local file_dir_path = vim.fn.fnamemodify(file_abs, ":p:h")
   local file_name = vim.fn.fnamemodify(file_abs, ":t")
-  -- The history directory is <file_dir_path>/.history/<file_name>/
-  local history_dir = file_dir_path .. "/.history/" .. file_name
+  -- The history directory is <file_dir_path>/<root_dir>/<file_name>/
+  -- root_dir is relative to the file's directory (usually ".history")
+  local history_dir = file_dir_path .. "/" .. root_dir .. "/" .. file_name
   return history_dir
 end
 
